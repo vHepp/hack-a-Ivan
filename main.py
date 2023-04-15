@@ -6,7 +6,7 @@ import sys
 
 # 0 for webcam feed ; add "path to file"
 # for detection in video file
-capture = cv.VideoCapture(0)
+capture = cv.VideoCapture(1)
 face_cascade = cv.CascadeClassifier("haarcascade_frontalface_default.xml")
 eye_cascade = cv.CascadeClassifier("haarcascade_eye.xml")
 
@@ -272,7 +272,7 @@ class TetrisApp(object):
         if not self.gameover and not self.paused:
             newStone = self.stone
             newStoneY = self.stone_y
-            while(not check_collision(self.board, newStone, (self.stone_x, newStoneY))):
+            while (not check_collision(self.board, newStone, (self.stone_x, newStoneY))):
                 newStoneY += 1
             newStoneY -= 1
             self.stone = newStone
@@ -341,7 +341,7 @@ class TetrisApp(object):
                     newStone = self.stone
                     newStoneX = self.stone_x
                     newStoneY = self.stone_y
-                    while(not check_collision(self.board, newStone, (newStoneX, newStoneY))):
+                    while (not check_collision(self.board, newStone, (newStoneX, newStoneY))):
                         newStoneY += 1
                     newStoneY -= 1
                     self.draw_matrix_ghost(self.stone, (newStoneX, newStoneY))
