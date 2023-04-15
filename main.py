@@ -6,7 +6,7 @@ import sys
 
 # 0 for webcam feed ; add "path to file"
 # for detection in video file
-capture = cv.VideoCapture(1)
+capture = cv.VideoCapture(0)
 face_cascade = cv.CascadeClassifier("haarcascade_frontalface_default.xml")
 eye_cascade = cv.CascadeClassifier("haarcascade_eye.xml")
 
@@ -38,39 +38,6 @@ def printMove(command, lastMove, lastMoveCount):
 
 
 # TETRIS PART
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-# Very simple tetris implementation
-#
-# Control keys:
-# Down - Drop stone faster
-# Left/Right - Move stone
-# Up - Rotate Stone clockwise
-# Escape - Quit game
-# P - Pause game
-#
-# Have fun!
-
-# Copyright (c) 2010 "Kevin Chabowski"<kevin@kch42.de>
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
 
 # The configuration
 config = {
@@ -327,7 +294,7 @@ class TetrisApp(object):
         dont_burn_my_cpu.tick(config['maxfps'])
 
         while True:
-
+            faceCenter = 0
             self.screen.fill((0, 0, 0))
 
             if self.gameover:
@@ -361,6 +328,7 @@ class TetrisApp(object):
                 cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 cv.circle(frame, (x + int(w * 0.5), y +
                           int(h * 0.5)), 4, (0, 255, 0), -1)
+                faceCenter = x + int(w * 0.5)
 
             eyes = eye_cascade.detectMultiScale(
                 gray[y: int(y + h / 1.4), x: (x + w)], 1.1, 4, 0, [30, 30])
@@ -426,8 +394,8 @@ class TetrisApp(object):
                 # on either side the program will classify as right or left tilt)
 
                 if angle > 10:
-                    lastMove, lastMoveCount = printMove(
-                        "l", lastMove, lastMoveCount)
+                    # lastMove, lastMoveCount = printMove(
+                    #    "l", lastMove, lastMoveCount)
                     lastMove = "LEFT"
                     cv.putText(
                         frame,
@@ -441,9 +409,10 @@ class TetrisApp(object):
                     )
 
                 elif angle < -10:
-                    lastMove, lastMoveCount = printMove(
-                        "r", lastMove, lastMoveCount)
+                    # lastMove, lastMoveCount = printMove(
+                    #    "r", lastMove, lastMoveCount)
                     lastMove = "RIGHT"
+
                     cv.putText(
                         frame,
                         "RIGHT TILT :" + str(int(angle)) + " degrees",
@@ -456,8 +425,8 @@ class TetrisApp(object):
                     )
 
                 else:
-                    lastMove, lastMoveCount = printMove(
-                        "none", lastMove, lastMoveCount)
+                    # lastMove, lastMoveCount = printMove(
+                    #    "none", lastMove, lastMoveCount)
                     lastMove = ""
                     cv.putText(
                         frame,
@@ -474,7 +443,11 @@ class TetrisApp(object):
                 if event.type == pygame.USEREVENT+1:
                     self.drop()
 
-            key_actions[lastMove]()
+            # key_actions[lastMove]()
+            print("face_x", faceCenter)
+            if faceCenter != 0:
+                self.stone_x = int(faceCenter/50)
+
             if cv.waitKey(1) & 0xFF == 27:
                 break
 
