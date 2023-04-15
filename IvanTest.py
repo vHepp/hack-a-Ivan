@@ -81,6 +81,9 @@ config = {
     'maxfps':	  15
 }
 
+# Constant added by Nick
+TILE_SIZE = config['cell_size']
+
 colors = [
     (0,   0,   0),
     (255, 0,   0),
@@ -115,10 +118,20 @@ tetris_shapes = [
         [7, 7]]
 ]
 
+
+
 def rotate_clockwise(shape):
     return [[shape[y][x]
-                for y in range(len(shape))]
+             for y in range(len(shape))]
             for x in range(len(shape[0]) - 1, -1, -1)]
+
+
+# new function added by Nick
+def rotate_counterClockwise(shape):
+	for i in range(3):
+		shape = rotate_clockwise(shape)
+	return shape
+
 
 def check_collision(board, shape, offset):
     off_x, off_y = offset
@@ -131,9 +144,11 @@ def check_collision(board, shape, offset):
                 return True
     return False
 
+
 def remove_row(board, row):
     del board[row]
     return [[0 for i in range(config['cols'])]] + board
+
 
 def join_matrixes(mat1, mat2, mat2_off):
     off_x, off_y = mat2_off
@@ -142,14 +157,16 @@ def join_matrixes(mat1, mat2, mat2_off):
             mat1[cy+off_y-1][cx+off_x] += val
     return mat1
 
+
 def new_board():
     board = [[0 for x in range(config['cols'])]
-                for y in range(config['rows'])]
+             for y in range(config['rows'])]
     board += [[1 for x in range(config['cols'])]]
     return board
 
 
 class TetrisApp(object):
+
     def __init__(self):
 
         pygame.init()
@@ -159,11 +176,9 @@ class TetrisApp(object):
         self.height = config['cell_size']*config['rows']
 
         self.screen = pygame.display.set_mode((self.width, self.height))
-        pygame.event.set_blocked(pygame.MOUSEMOTION)  # We do not need
-        # mouse movement
-        # events, so we
-        # block them.
+        pygame.event.set_blocked(pygame.MOUSEMOTION)  # We do not need mouse movement events, so we block them.
         self.init_game()
+
 
     def new_stone(self):
         self.stone = tetris_shapes[rand(len(tetris_shapes))]
@@ -171,13 +186,15 @@ class TetrisApp(object):
         self.stone_y = 0
 
         if check_collision(self.board,
-                            self.stone,
-                            (self.stone_x, self.stone_y)):
+                           self.stone,
+                           (self.stone_x, self.stone_y)):
             self.gameover = True
+
 
     def init_game(self):
         self.board = new_board()
         self.new_stone()
+
 
     def center_msg(self, msg):
         for i, line in enumerate(msg.splitlines()):
@@ -189,25 +206,30 @@ class TetrisApp(object):
             msgim_center_x //= 2
             msgim_center_y //= 2
 
-            self.screen.blit(msg_image, (
-                self.width // 2-msgim_center_x,
-                self.height // 2-msgim_center_y+i*22))
+            self.screen.blit(msg_image, (self.width // 2-msgim_center_x, self.height // 2-msgim_center_y+i*22))
 
-    def draw_matrix(self, matrix, offset):
-        off_x, off_y = offset
+
+
+    # New function by Nick
+    def draw_matrix_regular(self, matrix, offset):
+        off_x, off_y  = offset
         for y, row in enumerate(matrix):
             for x, val in enumerate(row):
                 if val:
-                    pygame.draw.rect(
-                        self.screen,
-                        colors[val],
-                        pygame.Rect(
-                            (off_x+x) *
-                            config['cell_size'],
-                            (off_y+y) *
-                            config['cell_size'],
-                            config['cell_size'],
-                            config['cell_size']), 0)
+                    xGrad = 155
+                    yGrad = 155
+                    increm = 100/(TILE_SIZE*TILE_SIZE)
+                    pygame.draw.rect(self.screen, colors[val], pygame.Rect( (off_x+x) *TILE_SIZE, (off_y+y)*TILE_SIZE, TILE_SIZE, TILE_SIZE), 0)
+
+
+    # New function by Nick
+    def draw_matrix_ghost(self, matrix, offset):
+        off_x, off_y  = offset
+        for y, row in enumerate(matrix):
+            for x, val in enumerate(row):
+                if val:
+                    pygame.draw.rect(self.screen, colors[val], pygame.Rect( (off_x+x) *TILE_SIZE, (off_y+y)*TILE_SIZE, TILE_SIZE, TILE_SIZE), 2, 6)
+
 
     def move(self, delta_x):
         if not self.gameover and not self.paused:
@@ -217,8 +239,8 @@ class TetrisApp(object):
             if new_x > config['cols'] - len(self.stone[0]):
                 new_x = config['cols'] - len(self.stone[0])
             if not check_collision(self.board,
-                                    self.stone,
-                                    (new_x, self.stone_y)):
+                                   self.stone,
+                                   (new_x, self.stone_y)):
                 self.stone_x = new_x
 
     def quit(self):
@@ -230,8 +252,8 @@ class TetrisApp(object):
         if not self.gameover and not self.paused:
             self.stone_y += 1
             if check_collision(self.board,
-                                self.stone,
-                                (self.stone_x, self.stone_y)):
+                               self.stone,
+                               (self.stone_x, self.stone_y)):
                 self.board = join_matrixes(
                     self.board,
                     self.stone,
@@ -246,34 +268,62 @@ class TetrisApp(object):
                     else:
                         break
 
-    def rotate_stone(self):
+
+    # New function added by Nick
+    def quickDrop(self):
+        if not self.gameover and not self.paused:
+            newStone = self.stone
+            newStoneY = self.stone_y
+            while(not check_collision(self.board, newStone, (self.stone_x, newStoneY)) ):
+                newStoneY += 1
+            newStoneY -= 1
+            self.stone = newStone
+            self.stone_y = newStoneY
+
+
+
+    def rotate_stone_Clockwise(self):
         if not self.gameover and not self.paused:
             new_stone = rotate_clockwise(self.stone)
             if not check_collision(self.board,
-                                    new_stone,
-                                    (self.stone_x, self.stone_y)):
+			                       new_stone,
+			                       (self.stone_x, self.stone_y)):
                 self.stone = new_stone
+	
+
+	# New function added by Nick
+    def rotate_stone_CounterClockwise(self):
+        if not self.gameover and not self.paused:
+            new_stone = rotate_counterClockwise(self.stone)
+            if not check_collision(self.board,
+			                       new_stone,
+			                       (self.stone_x, self.stone_y)):
+                self.stone = new_stone
+
 
     def toggle_pause(self):
         self.paused = not self.paused
+
 
     def start_game(self):
         if self.gameover:
             self.init_game()
             self.gameover = False
 
+
     def run(self):
         lastMove = ""
         lastMoveCount = 0
         key_actions = {
             'ESCAPE':	self.quit,
-            'LEFT': lambda: self.move(-1),
-            'RIGHT': lambda: self.move(+1),
-            'DOWN':		self.drop,
-            'UP':		self.rotate_stone,
-            'p':		self.toggle_pause,
-            'SPACE':	self.start_game,
-            '': lambda: self.move(0)
+			'LEFT':		lambda:self.move(-1),
+			'RIGHT':	lambda:self.move(+1),
+			'DOWN':		self.drop,
+			'UP':       self.quickDrop,
+			'z':		self.rotate_stone_CounterClockwise,
+			'x':        self.rotate_stone_Clockwise,
+			'p':		self.toggle_pause,
+            '':         lambda: self.move(0)
         }
 
         self.gameover = False
@@ -294,11 +344,16 @@ class TetrisApp(object):
                 if self.paused:
                     self.center_msg("Paused")
                 else:
-                    self.draw_matrix(self.board, (0, 0))
-                    self.draw_matrix(self.stone,
-                                        (self.stone_x,
-                                        self.stone_y))
-                    
+                    self.draw_matrix_regular(self.board, (0,0) )
+                    newStone = self.stone
+                    newStoneX = self.stone_x
+                    newStoneY = self.stone_y
+                    while(not check_collision(self.board, newStone, (newStoneX, newStoneY)) ):
+                        newStoneY += 1
+                    newStoneY -= 1
+                    self.draw_matrix_ghost(self.stone, (newStoneX, newStoneY) )
+                    self.draw_matrix_regular(self.stone, (self.stone_x, self.stone_y) )
+
 
             ########## FACE RECOGNITION PART ############
             ########## FACE RECOGNITION PART ############
@@ -311,9 +366,11 @@ class TetrisApp(object):
             x, y, w, h = 0, 0, 0, 0
             for x, y, w, h in faces:
                 cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv.circle(frame, (x + int(w * 0.5), y + int(h * 0.5)), 4, (0, 255, 0), -1)
-            
-            eyes = eye_cascade.detectMultiScale(gray[y: int(y + h / 1.4), x: (x + w)], 1.1, 4, 0, [30, 30])
+                cv.circle(frame, (x + int(w * 0.5), y +
+                          int(h * 0.5)), 4, (0, 255, 0), -1)
+
+            eyes = eye_cascade.detectMultiScale(
+                gray[y: int(y + h / 1.4), x: (x + w)], 1.1, 4, 0, [30, 30])
 
             index = 0
             eye_1 = [None, None, None, None]
@@ -332,7 +389,7 @@ class TetrisApp(object):
                     2,
                 )
 
-            index = index + 1
+                index = index + 1
 
             if (eye_1[0] is not None) and (eye_2[0] is not None):
 
@@ -343,99 +400,103 @@ class TetrisApp(object):
                     left_eye = eye_2
                     right_eye = eye_1
 
-            left_eye_center = (
-                int(left_eye[0] + (left_eye[2] / 2)),
-                int(left_eye[1] + (left_eye[3] / 2)),
-            )
-
-            right_eye_center = (
-                int(right_eye[0] + (right_eye[2] / 2)),
-                int(right_eye[1] + (right_eye[3] / 2)),
-            )
-
-            left_eye_x = left_eye_center[0]
-            left_eye_y = left_eye_center[1]
-            right_eye_x = right_eye_center[0]
-            right_eye_y = right_eye_center[1]
-
-            delta_x = right_eye_x - left_eye_x
-            delta_y = right_eye_y - left_eye_y
-
-            if delta_x == 0:
-                delta_x = 1
-                print("##################DIVISION BY 0####################")
-
-            # Slope of line formula
-            angle = np.arctan(delta_y / delta_x)
-
-            # Converting radians to degrees
-            angle = (angle * 180) / np.pi
-
-            # Provided a margin of error of 10 degrees
-            # (i.e, if the face tilts more than 10 degrees
-            # on either side the program will classify as right or left tilt)
-
-            if angle > 10:
-                lastMove, lastMoveCount = printMove(
-                    "l", lastMove, lastMoveCount)
-                lastMove = "LEFT"
-                cv.putText(
-                    frame,
-                    "LEFT TILT :" + str(int(angle)) + " degrees",
-                    (20, 30),
-                    cv.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 0, 0),
-                    2,
-                    cv.LINE_4,
+                left_eye_center = (
+                    int(left_eye[0] + (left_eye[2] / 2)),
+                    int(left_eye[1] + (left_eye[3] / 2)),
                 )
 
-            elif angle < -10:
-                lastMove, lastMoveCount = printMove(
-                    "r", lastMove, lastMoveCount)
-                lastMove = "RIGHT"
-                cv.putText(
-                    frame,
-                    "RIGHT TILT :" + str(int(angle)) + " degrees",
-                    (20, 30),
-                    cv.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 0, 0),
-                    2,
-                    cv.LINE_4,
+                right_eye_center = (
+                    int(right_eye[0] + (right_eye[2] / 2)),
+                    int(right_eye[1] + (right_eye[3] / 2)),
                 )
 
-            else:
-                lastMove, lastMoveCount = printMove(
-                    "none", lastMove, lastMoveCount)
-                lastMove = ""
-                cv.putText(
-                    frame,
-                    "STRAIGHT :",
-                    (20, 30),
-                    cv.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 0, 0),
-                    2,
-                    cv.LINE_4,
-                )
+                left_eye_x = left_eye_center[0]
+                left_eye_y = left_eye_center[1]
+                right_eye_x = right_eye_center[0]
+                right_eye_y = right_eye_center[1]
 
-        
+                delta_x = right_eye_x - left_eye_x
+                delta_y = right_eye_y - left_eye_y
 
-            if cv.waitKey(1) & 0xFF == 27:
-                break
-                        
+                if delta_x == 0:
+                    delta_x = 1
+                    print("##################DIVISION BY 0####################")
+
+                # Slope of line formula
+                angle = np.arctan(delta_y / delta_x)
+
+                # Converting radians to degrees
+                angle = (angle * 180) / np.pi
+
+                # Provided a margin of error of 10 degrees
+                # (i.e, if the face tilts more than 10 degrees
+                # on either side the program will classify as right or left tilt)
+
+                if angle > 10:
+                    lastMove, lastMoveCount = printMove(
+                        "l", lastMove, lastMoveCount)
+                    lastMove = "LEFT"
+                    cv.putText(
+                        frame,
+                        "LEFT TILT :" + str(int(angle)) + " degrees",
+                        (20, 30),
+                        cv.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 0, 0),
+                        2,
+                        cv.LINE_4,
+                    )
+
+                elif angle < -10:
+                    lastMove, lastMoveCount = printMove(
+                        "r", lastMove, lastMoveCount)
+                    lastMove = "RIGHT"
+                    cv.putText(
+                        frame,
+                        "RIGHT TILT :" + str(int(angle)) + " degrees",
+                        (20, 30),
+                        cv.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 0, 0),
+                        2,
+                        cv.LINE_4,
+                    )
+
+                else:
+                    lastMove, lastMoveCount = printMove(
+                        "none", lastMove, lastMoveCount)
+                    lastMove = ""
+                    cv.putText(
+                        frame,
+                        "STRAIGHT :",
+                        (20, 30),
+                        cv.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 0, 0),
+                        2,
+                        cv.LINE_4,
+                    )
+
+            
+            for event in pygame.event.get():
+                if event.type == pygame.USEREVENT+1:
+                    self.drop()
 
             key_actions[lastMove]()
+            if cv.waitKey(1) & 0xFF == 27:
+                break
+
+            cv.imshow("Frame", frame)
             pygame.display.update()
 
-            #### end while loop and run()
+            # end while loop and run()
+
 
 if __name__ == '__main__':
 
     App = TetrisApp()
     App.run()
 
-    
+
 capture.release()
 cv.destroyAllWindows()
