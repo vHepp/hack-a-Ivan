@@ -125,12 +125,12 @@ def main():
 
 	# set scale default as 0.43 which suits
 	# a Courier font
-	scale = 1
+	scale = 0.43
 	if args.scale:
 		scale = float(args.scale)
 
 	# set cols
-	cols = 200
+	cols = 1080
 	if args.cols:
 		cols = int(args.cols)
 
