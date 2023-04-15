@@ -4,7 +4,7 @@ import numpy as np
 import math
 
 from PIL import Image
-
+#
 # gray scale level values from:
 # http://paulbourke.net/dataformats/asciiart/
 
