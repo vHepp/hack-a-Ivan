@@ -7,8 +7,10 @@ import sys
 # 0 for webcam feed ; add "path to file"
 # for detection in video file
 capture = cv.VideoCapture(0)
-face_cascade = cv.CascadeClassifier("haarcascade_frontalface_default.xml")
-eye_cascade = cv.CascadeClassifier("haarcascade_eye.xml")
+face_cascade = cv.CascadeClassifier(
+    cv.data.haarcascades + "haarcascade_frontalface_default.xml")
+eye_cascade = cv.CascadeClassifier(
+    cv.data.haarcascades + "haarcascade_eye.xml")
 
 
 def printMove(command, lastMove, lastMoveCount):
@@ -115,10 +117,12 @@ tetris_shapes = [
         [7, 7]]
 ]
 
+
 def rotate_clockwise(shape):
     return [[shape[y][x]
-                for y in range(len(shape))]
+             for y in range(len(shape))]
             for x in range(len(shape[0]) - 1, -1, -1)]
+
 
 def check_collision(board, shape, offset):
     off_x, off_y = offset
@@ -131,9 +135,11 @@ def check_collision(board, shape, offset):
                 return True
     return False
 
+
 def remove_row(board, row):
     del board[row]
     return [[0 for i in range(config['cols'])]] + board
+
 
 def join_matrixes(mat1, mat2, mat2_off):
     off_x, off_y = mat2_off
@@ -142,9 +148,10 @@ def join_matrixes(mat1, mat2, mat2_off):
             mat1[cy+off_y-1][cx+off_x] += val
     return mat1
 
+
 def new_board():
     board = [[0 for x in range(config['cols'])]
-                for y in range(config['rows'])]
+             for y in range(config['rows'])]
     board += [[1 for x in range(config['cols'])]]
     return board
 
@@ -171,8 +178,8 @@ class TetrisApp(object):
         self.stone_y = 0
 
         if check_collision(self.board,
-                            self.stone,
-                            (self.stone_x, self.stone_y)):
+                           self.stone,
+                           (self.stone_x, self.stone_y)):
             self.gameover = True
 
     def init_game(self):
@@ -217,8 +224,8 @@ class TetrisApp(object):
             if new_x > config['cols'] - len(self.stone[0]):
                 new_x = config['cols'] - len(self.stone[0])
             if not check_collision(self.board,
-                                    self.stone,
-                                    (new_x, self.stone_y)):
+                                   self.stone,
+                                   (new_x, self.stone_y)):
                 self.stone_x = new_x
 
     def quit(self):
@@ -230,8 +237,8 @@ class TetrisApp(object):
         if not self.gameover and not self.paused:
             self.stone_y += 1
             if check_collision(self.board,
-                                self.stone,
-                                (self.stone_x, self.stone_y)):
+                               self.stone,
+                               (self.stone_x, self.stone_y)):
                 self.board = join_matrixes(
                     self.board,
                     self.stone,
@@ -250,8 +257,8 @@ class TetrisApp(object):
         if not self.gameover and not self.paused:
             new_stone = rotate_clockwise(self.stone)
             if not check_collision(self.board,
-                                    new_stone,
-                                    (self.stone_x, self.stone_y)):
+                                   new_stone,
+                                   (self.stone_x, self.stone_y)):
                 self.stone = new_stone
 
     def toggle_pause(self):
@@ -296,9 +303,8 @@ class TetrisApp(object):
                 else:
                     self.draw_matrix(self.board, (0, 0))
                     self.draw_matrix(self.stone,
-                                        (self.stone_x,
-                                        self.stone_y))
-                    
+                                     (self.stone_x,
+                                         self.stone_y))
 
             ########## FACE RECOGNITION PART ############
             ########## FACE RECOGNITION PART ############
@@ -311,9 +317,11 @@ class TetrisApp(object):
             x, y, w, h = 0, 0, 0, 0
             for x, y, w, h in faces:
                 cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv.circle(frame, (x + int(w * 0.5), y + int(h * 0.5)), 4, (0, 255, 0), -1)
-            
-            eyes = eye_cascade.detectMultiScale(gray[y: int(y + h / 1.4), x: (x + w)], 1.1, 4, 0, [30, 30])
+                cv.circle(frame, (x + int(w * 0.5), y +
+                          int(h * 0.5)), 4, (0, 255, 0), -1)
+
+            eyes = eye_cascade.detectMultiScale(
+                gray[y: int(y + h / 1.4), x: (x + w)], 1.1, 4, 0, [30, 30])
 
             index = 0
             eye_1 = [None, None, None, None]
@@ -332,7 +340,7 @@ class TetrisApp(object):
                     2,
                 )
 
-            index = index + 1
+                index = index + 1
 
             if (eye_1[0] is not None) and (eye_2[0] is not None):
 
@@ -343,99 +351,97 @@ class TetrisApp(object):
                     left_eye = eye_2
                     right_eye = eye_1
 
-            left_eye_center = (
-                int(left_eye[0] + (left_eye[2] / 2)),
-                int(left_eye[1] + (left_eye[3] / 2)),
-            )
-
-            right_eye_center = (
-                int(right_eye[0] + (right_eye[2] / 2)),
-                int(right_eye[1] + (right_eye[3] / 2)),
-            )
-
-            left_eye_x = left_eye_center[0]
-            left_eye_y = left_eye_center[1]
-            right_eye_x = right_eye_center[0]
-            right_eye_y = right_eye_center[1]
-
-            delta_x = right_eye_x - left_eye_x
-            delta_y = right_eye_y - left_eye_y
-
-            if delta_x == 0:
-                delta_x = 1
-                print("##################DIVISION BY 0####################")
-
-            # Slope of line formula
-            angle = np.arctan(delta_y / delta_x)
-
-            # Converting radians to degrees
-            angle = (angle * 180) / np.pi
-
-            # Provided a margin of error of 10 degrees
-            # (i.e, if the face tilts more than 10 degrees
-            # on either side the program will classify as right or left tilt)
-
-            if angle > 10:
-                lastMove, lastMoveCount = printMove(
-                    "l", lastMove, lastMoveCount)
-                lastMove = "LEFT"
-                cv.putText(
-                    frame,
-                    "LEFT TILT :" + str(int(angle)) + " degrees",
-                    (20, 30),
-                    cv.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 0, 0),
-                    2,
-                    cv.LINE_4,
+                left_eye_center = (
+                    int(left_eye[0] + (left_eye[2] / 2)),
+                    int(left_eye[1] + (left_eye[3] / 2)),
                 )
 
-            elif angle < -10:
-                lastMove, lastMoveCount = printMove(
-                    "r", lastMove, lastMoveCount)
-                lastMove = "RIGHT"
-                cv.putText(
-                    frame,
-                    "RIGHT TILT :" + str(int(angle)) + " degrees",
-                    (20, 30),
-                    cv.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 0, 0),
-                    2,
-                    cv.LINE_4,
+                right_eye_center = (
+                    int(right_eye[0] + (right_eye[2] / 2)),
+                    int(right_eye[1] + (right_eye[3] / 2)),
                 )
 
-            else:
-                lastMove, lastMoveCount = printMove(
-                    "none", lastMove, lastMoveCount)
-                lastMove = ""
-                cv.putText(
-                    frame,
-                    "STRAIGHT :",
-                    (20, 30),
-                    cv.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 0, 0),
-                    2,
-                    cv.LINE_4,
-                )
+                left_eye_x = left_eye_center[0]
+                left_eye_y = left_eye_center[1]
+                right_eye_x = right_eye_center[0]
+                right_eye_y = right_eye_center[1]
 
-        
+                delta_x = right_eye_x - left_eye_x
+                delta_y = right_eye_y - left_eye_y
 
+                if delta_x == 0:
+                    delta_x = 1
+                    print("##################DIVISION BY 0####################")
+
+                # Slope of line formula
+                angle = np.arctan(delta_y / delta_x)
+
+                # Converting radians to degrees
+                angle = (angle * 180) / np.pi
+
+                # Provided a margin of error of 10 degrees
+                # (i.e, if the face tilts more than 10 degrees
+                # on either side the program will classify as right or left tilt)
+
+                if angle > 10:
+                    lastMove, lastMoveCount = printMove(
+                        "l", lastMove, lastMoveCount)
+                    lastMove = "LEFT"
+                    cv.putText(
+                        frame,
+                        "LEFT TILT :" + str(int(angle)) + " degrees",
+                        (20, 30),
+                        cv.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 0, 0),
+                        2,
+                        cv.LINE_4,
+                    )
+
+                elif angle < -10:
+                    lastMove, lastMoveCount = printMove(
+                        "r", lastMove, lastMoveCount)
+                    lastMove = "RIGHT"
+                    cv.putText(
+                        frame,
+                        "RIGHT TILT :" + str(int(angle)) + " degrees",
+                        (20, 30),
+                        cv.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 0, 0),
+                        2,
+                        cv.LINE_4,
+                    )
+
+                else:
+                    lastMove, lastMoveCount = printMove(
+                        "none", lastMove, lastMoveCount)
+                    lastMove = ""
+                    cv.putText(
+                        frame,
+                        "STRAIGHT :",
+                        (20, 30),
+                        cv.FONT_HERSHEY_SIMPLEX,
+                        1,
+                        (0, 0, 0),
+                        2,
+                        cv.LINE_4,
+                    )
+            key_actions[lastMove]()
             if cv.waitKey(1) & 0xFF == 27:
                 break
-                        
 
-            key_actions[lastMove]()
+            cv.imshow("Frame", frame)
             pygame.display.update()
 
-            #### end while loop and run()
+            # end while loop and run()
+
 
 if __name__ == '__main__':
 
     App = TetrisApp()
     App.run()
 
-    
+
 capture.release()
 cv.destroyAllWindows()
