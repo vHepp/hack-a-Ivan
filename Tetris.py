@@ -180,17 +180,26 @@ class TetrisApp(object):
 			  self.height // 2-msgim_center_y+i*22))
 	
 
-	def draw_matrix(self, matrix, offset, mode):
+    # New function by Nick
+	def draw_matrix_regular(self, matrix, offset):
 		off_x, off_y  = offset
 		for y, row in enumerate(matrix):
 			for x, val in enumerate(row):
 				if val:
-					if(mode == "regular"):
-						pygame.draw.rect(self.screen, colors[val], pygame.Rect( (off_x+x) *TILE_SIZE, (off_y+y)*TILE_SIZE, TILE_SIZE, TILE_SIZE), 0)
-					elif(mode == "ghost"):
-						pygame.draw.rect(self.screen, pygame.Color(255, 255, 255), pygame.Rect( (off_x+x) *TILE_SIZE, (off_y+y)*TILE_SIZE, TILE_SIZE, TILE_SIZE), 0)
+					xGrad = 155
+					yGrad = 155
+					increm = 100/(TILE_SIZE*TILE_SIZE)
+					pygame.draw.rect(self.screen, colors[val], pygame.Rect( (off_x+x) *TILE_SIZE, (off_y+y)*TILE_SIZE, TILE_SIZE, TILE_SIZE), 0)
 
 	
+	# New function by Nick
+	def draw_matrix_ghost(self, matrix, offset):
+		off_x, off_y  = offset
+		for y, row in enumerate(matrix):
+			for x, val in enumerate(row):
+				if val:
+					pygame.draw.rect(self.screen, colors[val], pygame.Rect( (off_x+x) *TILE_SIZE, (off_y+y)*TILE_SIZE, TILE_SIZE, TILE_SIZE), 2, 6)
+
 
 	def move(self, delta_x):
 		if not self.gameover and not self.paused:
@@ -299,15 +308,15 @@ Press space to continue""")
 				if self.paused:
 					self.center_msg("Paused")
 				else:
-					self.draw_matrix(self.board, (0,0), 'regular')
+					self.draw_matrix_regular(self.board, (0,0) )
 					newStone = self.stone
 					newStoneX = self.stone_x
 					newStoneY = self.stone_y
 					while(not check_collision(self.board, newStone, (newStoneX, newStoneY)) ):
 						newStoneY += 1
 					newStoneY -= 1
-					self.draw_matrix(self.stone, (newStoneX, newStoneY), 'ghost')
-					self.draw_matrix(self.stone, (self.stone_x, self.stone_y), 'regular')
+					self.draw_matrix_ghost(self.stone, (newStoneX, newStoneY) )
+					self.draw_matrix_regular(self.stone, (self.stone_x, self.stone_y) )
 					
 
 
