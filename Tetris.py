@@ -2,28 +2,29 @@
 #-*- coding: utf-8 -*-
 
 # Very simple tetris implementation
-# 
+
 # Control keys:
-# Down - Drop stone faster
 # Left/Right - Move stone
-# Up - Rotate Stone clockwise
+# Down  - Drop Stone Faster
+# Up - Instant Stone Drop
+# z - Rotate Stone counter-clockwise
+# x - Rotate Stone clockwise
 # Escape - Quit game
 # P - Pause game
-#
-# Have fun!
+
 
 # Copyright (c) 2010 "Kevin Chabowski"<kevin@kch42.de>
-# 
+
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
 # to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 # copies of the Software, and to permit persons to whom the Software is
 # furnished to do so, subject to the following conditions:
-# 
+
 # The above copyright notice and this permission notice shall be included in
 # all copies or substantial portions of the Software.
-# 
+
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 # IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 # FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -41,9 +42,13 @@ config = {
 	'cell_size':  30,
 	'cols':		  8,
 	'rows':		  16,
-	'delay':	  750,
+	'delay':	  900,
 	'maxfps':	  30
 }
+
+
+# Constant added by Nick
+TILE_SIZE = config['cell_size']
 
 
 colors = [
@@ -88,6 +93,13 @@ def rotate_clockwise(shape):
 		for x in range(len(shape[0]) - 1, -1, -1) ]
 
 
+# new function added by Nick
+def rotate_counterClockwise(shape):
+	for i in range(3):
+		shape = rotate_clockwise(shape)
+	return shape
+
+
 def check_collision(board, shape, offset):
 	off_x, off_y = offset
 	for cy, row in enumerate(shape):
@@ -121,6 +133,8 @@ def new_board():
 
 
 class TetrisApp(object):
+
+
 	def __init__(self):
 		pygame.init()
 		pygame.key.set_repeat(250,25)
@@ -134,6 +148,7 @@ class TetrisApp(object):
 		                                             # block them.
 		self.init_game()
 	
+
 	def new_stone(self):
 		self.stone = tetris_shapes[rand(len(tetris_shapes))]
 		self.stone_x = int(config['cols'] / 2 - len(self.stone[0])/2)
@@ -144,10 +159,12 @@ class TetrisApp(object):
 		                   (self.stone_x, self.stone_y)):
 			self.gameover = True
 	
+
 	def init_game(self):
 		self.board = new_board()
 		self.new_stone()
 	
+
 	def center_msg(self, msg):
 		for i, line in enumerate(msg.splitlines()):
 			msg_image =  pygame.font.Font(
@@ -162,22 +179,19 @@ class TetrisApp(object):
 			  self.width // 2-msgim_center_x,
 			  self.height // 2-msgim_center_y+i*22))
 	
-	def draw_matrix(self, matrix, offset):
+
+	def draw_matrix(self, matrix, offset, mode):
 		off_x, off_y  = offset
 		for y, row in enumerate(matrix):
 			for x, val in enumerate(row):
 				if val:
-					pygame.draw.rect(
-						self.screen,
-						colors[val],
-						pygame.Rect(
-							(off_x+x) *
-							  config['cell_size'],
-							(off_y+y) *
-							  config['cell_size'], 
-							config['cell_size'],
-							config['cell_size']),0)
+					if(mode == "regular"):
+						pygame.draw.rect(self.screen, colors[val], pygame.Rect( (off_x+x) *TILE_SIZE, (off_y+y)*TILE_SIZE, TILE_SIZE, TILE_SIZE), 0)
+					elif(mode == "ghost"):
+						pygame.draw.rect(self.screen, pygame.Color(255, 255, 255), pygame.Rect( (off_x+x) *TILE_SIZE, (off_y+y)*TILE_SIZE, TILE_SIZE, TILE_SIZE), 0)
+
 	
+
 	def move(self, delta_x):
 		if not self.gameover and not self.paused:
 			new_x = self.stone_x + delta_x
@@ -189,11 +203,14 @@ class TetrisApp(object):
 			                       self.stone,
 			                       (new_x, self.stone_y)):
 				self.stone_x = new_x
+	
+
 	def quit(self):
 		self.center_msg("Exiting...")
 		pygame.display.update()
 		sys.exit()
 	
+
 	def drop(self):
 		if not self.gameover and not self.paused:
 			self.stone_y += 1
@@ -214,7 +231,19 @@ class TetrisApp(object):
 					else:
 						break
 	
-	def rotate_stone(self):
+	# New function added by Nick
+	def quickDrop(self):
+		if not self.gameover and not self.paused:
+			newStone = self.stone
+			newStoneY = self.stone_y
+			while(not check_collision(self.board, newStone, (self.stone_x, newStoneY)) ):
+				newStoneY += 1
+			newStoneY -= 1
+			self.stone = newStone
+			self.stone_y = newStoneY
+
+
+	def rotate_stone_Clockwise(self):
 		if not self.gameover and not self.paused:
 			new_stone = rotate_clockwise(self.stone)
 			if not check_collision(self.board,
@@ -222,21 +251,36 @@ class TetrisApp(object):
 			                       (self.stone_x, self.stone_y)):
 				self.stone = new_stone
 	
+
+	# New function added by Nick
+	def rotate_stone_CounterClockwise(self):
+		if not self.gameover and not self.paused:
+			new_stone = rotate_counterClockwise(self.stone)
+			if not check_collision(self.board,
+			                       new_stone,
+			                       (self.stone_x, self.stone_y)):
+				self.stone = new_stone
+	
+
 	def toggle_pause(self):
 		self.paused = not self.paused
 	
+
 	def start_game(self):
 		if self.gameover:
 			self.init_game()
 			self.gameover = False
 	
+
 	def run(self):
 		key_actions = {
 			'ESCAPE':	self.quit,
 			'LEFT':		lambda:self.move(-1),
 			'RIGHT':	lambda:self.move(+1),
 			'DOWN':		self.drop,
-			'UP':		self.rotate_stone,
+			'UP':       self.quickDrop,
+			'z':		self.rotate_stone_CounterClockwise,
+			'x':        self.rotate_stone_Clockwise,
 			'p':		self.toggle_pause,
 			'SPACE':	self.start_game
 		}
@@ -255,10 +299,18 @@ Press space to continue""")
 				if self.paused:
 					self.center_msg("Paused")
 				else:
-					self.draw_matrix(self.board, (0,0))
-					self.draw_matrix(self.stone,
-					                 (self.stone_x,
-					                  self.stone_y))
+					self.draw_matrix(self.board, (0,0), 'regular')
+					newStone = self.stone
+					newStoneX = self.stone_x
+					newStoneY = self.stone_y
+					while(not check_collision(self.board, newStone, (newStoneX, newStoneY)) ):
+						newStoneY += 1
+					newStoneY -= 1
+					self.draw_matrix(self.stone, (newStoneX, newStoneY), 'ghost')
+					self.draw_matrix(self.stone, (self.stone_x, self.stone_y), 'regular')
+					
+
+
 			pygame.display.update()
 			
 			for event in pygame.event.get():
@@ -273,6 +325,7 @@ Press space to continue""")
 							key_actions[key]()
 					
 			dont_burn_my_cpu.tick(config['maxfps'])
+
 
 if __name__ == '__main__':
 	App = TetrisApp()
