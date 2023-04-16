@@ -47,7 +47,7 @@ config = {
     'cell_size':  20,
     'cols':		  16,
     'rows':		  20,
-    'delay':	  600,
+    'delay':	  500,
     'maxfps':	  30
 }
 
@@ -286,7 +286,8 @@ class TetrisApp(object):
             'z':		self.rotate_stone_CounterClockwise,
             'x':        self.rotate_stone_Clockwise,
             'p':		self.toggle_pause,
-            '': lambda: self.move(0)
+            'SPACE':	self.start_game
+
         }
 
         self.gameover = False
@@ -297,7 +298,7 @@ class TetrisApp(object):
         clock.tick(config['maxfps'])
 
         i = -1
-        faceCenterYs = []
+        faceCenterYs = [None, None, None]
         while True:
             i += 1
             faceCenter = 0
@@ -329,18 +330,19 @@ class TetrisApp(object):
             ret, frame = capture.read()
 
             gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, 1.05, 6, 0, [50, 50])
+            faces = face_cascade.detectMultiScale(gray, 1.05, 6, 0, [180, 180])
 
             x, y, w, h = 0, 0, 0, 0
             for x, y, w, h in faces:
+                #print(x + w, y + h)
                 cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 cv.circle(frame, (x + int(w * 0.5), y +
                           int(h * 0.5)), 4, (0, 255, 0), -1)
                 faceCenter = x + int(w * 0.5)
-                faceCenterYs[i/3] = y + int(h * 0.5)
+                faceCenterYs[i % 3] = y + int(h * 0.5)
 
             eyes = eye_cascade.detectMultiScale(
-                gray[y: int(y + h / 1.4), x: (x + w)], 1.1, 4)
+                gray[y: int(y + h / 1.4), x: (x + w)], 1.1, 4, 0, [20, 20])
 
             index = 0
             eye_1 = [None, None, None, None]
@@ -447,18 +449,26 @@ class TetrisApp(object):
                         2,
                         cv.LINE_4,
                     )
-
+            if i % 3 == 2:
+                if faceCenterYs[2] and faceCenterYs[0]:
+                    #print(faceCenterYs[2] - faceCenterYs[0])
+                    if faceCenterYs[2] - faceCenterYs[0] > 15:
+                        self.quickDrop()
             for event in pygame.event.get():
                 if event.type == pygame.USEREVENT+1:
                     self.drop()
-                    print(faceCenterY)
+                    # print(faceCenterY)
                     if lastMove == "RIGHT":
                         self.rotate_stone_Clockwise()
                     elif lastMove == "LEFT":
                         self.rotate_stone_CounterClockwise()
-
-                    if faceCenterY - initialFaceCenterY > 10:
-                        self.quickDrop()
+                elif event.type == pygame.KEYDOWN:
+                    for key in key_actions:
+                        if event.key == eval("pygame.K_"
+                                             + key):
+                            key_actions[key]()
+                    # if faceCenterY - initialFaceCenterY > 10:
+                    #    self.quickDrop()
 
             # Mirroring stone and face location
             prev_x = self.stone_x
