@@ -4,10 +4,9 @@ from random import randrange as rand
 import pygame
 import sys
 
-# 0 for webcam feed ; add "path to file"
-# for detection in video file
-capture = cv.VideoCapture(1)
-
+# 0 for embedded webcam
+# 1 for external webcam
+capture = cv.VideoCapture(0)
 
 face_cascade = cv.CascadeClassifier("haarcascade_frontalface_default.xml")
 eye_cascade = cv.CascadeClassifier("haarcascade_eye.xml")
@@ -467,8 +466,6 @@ class TetrisApp(object):
                         if event.key == eval("pygame.K_"
                                              + key):
                             key_actions[key]()
-                    # if faceCenterY - initialFaceCenterY > 10:
-                    #    self.quickDrop()
 
             # Mirroring stone and face location
             prev_x = self.stone_x
