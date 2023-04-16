@@ -7,8 +7,7 @@ import sys
 # 0 for webcam feed ; add "path to file"
 # for detection in video file
 capture = cv.VideoCapture(1)
-#capture.set(3, 1280)
-#capture.set(4, 720)
+
 
 face_cascade = cv.CascadeClassifier("haarcascade_frontalface_default.xml")
 eye_cascade = cv.CascadeClassifier("haarcascade_eye.xml")
@@ -301,6 +300,7 @@ class TetrisApp(object):
         faceCenterYs = [None, None, None]
         while True:
             i += 1
+            print(i)
             faceCenter = 0
 
             self.screen.fill((0, 0, 0))
@@ -325,7 +325,7 @@ class TetrisApp(object):
 
             ########## FACE RECOGNITION PART ############
             ########## FACE RECOGNITION PART ############
-            ########## FACE RECOGNITION PART ############
+            # FACE RECOGNITION PART ############``
 
             ret, frame = capture.read()
 
@@ -342,7 +342,7 @@ class TetrisApp(object):
                 faceCenterYs[i % 3] = y + int(h * 0.5)
 
             eyes = eye_cascade.detectMultiScale(
-                gray[y: int(y + h / 1.4), x: (x + w)], 1.1, 4, 0, [20, 20])
+                gray[y: int(y + h / 1.4), x: (x + w)], 1.1, 4, 0, [23, 23])
 
             index = 0
             eye_1 = [None, None, None, None]
@@ -458,9 +458,9 @@ class TetrisApp(object):
                 if event.type == pygame.USEREVENT+1:
                     self.drop()
                     # print(faceCenterY)
-                    if lastMove == "RIGHT":
+                    if lastMove == "LEFT":
                         self.rotate_stone_Clockwise()
-                    elif lastMove == "LEFT":
+                    elif lastMove == "RIGHT":
                         self.rotate_stone_CounterClockwise()
                 elif event.type == pygame.KEYDOWN:
                     for key in key_actions:
