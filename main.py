@@ -444,10 +444,15 @@ class TetrisApp(object):
             for event in pygame.event.get():
                 if event.type == pygame.USEREVENT+1:
                     self.drop()
+                    if lastMove == "RIGHT":
+                        self.rotate_stone_Clockwise()
+                    elif lastMove == "LEFT":
+                        self.rotate_stone_CounterClockwise()
 
             # Mirroring stone and face location
             prev_x = self.stone_x
             prev_y = self.stone_y
+            xStone = 0
             if faceCenter != 0:
                 xStone = int((-4/75)*faceCenter+24)
                 if xStone < 0:
