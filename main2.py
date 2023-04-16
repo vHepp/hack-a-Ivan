@@ -6,9 +6,7 @@ import sys
 
 # 0 for webcam feed ; add "path to file"
 # for detection in video file
-capture = cv.VideoCapture(1)
-#capture.set(3, 1280)
-#capture.set(4, 720)
+capture = cv.VideoCapture(0)
 
 face_cascade = cv.CascadeClassifier("haarcascade_frontalface_default.xml")
 eye_cascade = cv.CascadeClassifier("haarcascade_eye.xml")
@@ -296,12 +294,18 @@ class TetrisApp(object):
         clock = pygame.time.Clock()
         clock.tick(config['maxfps'])
 
-        i = -1
-        faceCenterYs = []
-        while True:
-            i += 1
-            faceCenter = 0
+        ret, frame = capture.read()
+        gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, 1.05, 6, 0, [50, 50])
+        x, y, w, h = 0, 0, 0, 0
+        for x, y, w, h in faces:
+            cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            cv.circle(frame, (x + int(w * 0.5), y +
+                      int(h * 0.5)), 4, (0, 255, 0), -1)
+            initialFaceCenterY = y + int(h * 0.5)
 
+        while True:
+            faceCenter = 0
             self.screen.fill((0, 0, 0))
 
             if self.gameover:
@@ -337,7 +341,7 @@ class TetrisApp(object):
                 cv.circle(frame, (x + int(w * 0.5), y +
                           int(h * 0.5)), 4, (0, 255, 0), -1)
                 faceCenter = x + int(w * 0.5)
-                faceCenterYs[i/3] = y + int(h * 0.5)
+                faceCenterY = y + int(h * 0.5)
 
             eyes = eye_cascade.detectMultiScale(
                 gray[y: int(y + h / 1.4), x: (x + w)], 1.1, 4)
@@ -451,13 +455,14 @@ class TetrisApp(object):
             for event in pygame.event.get():
                 if event.type == pygame.USEREVENT+1:
                     self.drop()
-                    print(faceCenterY)
+
                     if lastMove == "RIGHT":
                         self.rotate_stone_Clockwise()
                     elif lastMove == "LEFT":
                         self.rotate_stone_CounterClockwise()
 
                     if faceCenterY - initialFaceCenterY > 10:
+
                         self.quickDrop()
 
             # Mirroring stone and face location
