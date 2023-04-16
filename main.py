@@ -467,8 +467,6 @@ class TetrisApp(object):
                         if event.key == eval("pygame.K_"
                                              + key):
                             key_actions[key]()
-                    # if faceCenterY - initialFaceCenterY > 10:
-                    #    self.quickDrop()
 
             # Mirroring stone and face location
             prev_x = self.stone_x
