@@ -1,5 +1,5 @@
 # hack-a-Ivan
 
-Controlling a Tetris Game with face tracking.
+_Controlling a Tetris Game with face tracking.
 
 OpenCV and Pygame
