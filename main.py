@@ -7,6 +7,7 @@ import sys
 # 0 for webcam feed ; add "path to file"
 # for detection in video file
 capture = cv.VideoCapture(0)
+
 face_cascade = cv.CascadeClassifier("haarcascade_frontalface_default.xml")
 eye_cascade = cv.CascadeClassifier("haarcascade_eye.xml")
 
@@ -196,9 +197,9 @@ class TetrisApp(object):
                     pygame.draw.rect(self.screen, colors[val], pygame.Rect(
                         (off_x+x) * TILE_SIZE, (off_y+y)*TILE_SIZE, TILE_SIZE, TILE_SIZE), 2, 6)
 
-    def move(self, delta_x):
+    def move(self, dest_x):
         if not self.gameover and not self.paused:
-            new_x = self.stone_x + delta_x
+            new_x = dest_x
             if new_x < 0:
                 new_x = 0
             if new_x > config['cols'] - len(self.stone[0]):
@@ -320,6 +321,7 @@ class TetrisApp(object):
             ########## FACE RECOGNITION PART ############
 
             ret, frame = capture.read()
+
             gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
             faces = face_cascade.detectMultiScale(gray, 1.1, 5)
 
@@ -443,10 +445,21 @@ class TetrisApp(object):
                 if event.type == pygame.USEREVENT+1:
                     self.drop()
 
-            # key_actions[lastMove]()
-            print("face_x", faceCenter)
+            # Mirroring stone and face location
+            prev_x = self.stone_x
+            prev_y = self.stone_y
             if faceCenter != 0:
-                self.stone_x = int(faceCenter/50)
+                xStone = int((-4/75)*faceCenter+24)
+                if xStone < 0:
+                    xStone = 0
+                elif xStone > 15:
+                    xStone = 15
+
+            try:
+                self.move(xStone)
+            except IndexError:
+                self.stone_x = prev_x
+                self.stone_y = prev_y
 
             if cv.waitKey(1) & 0xFF == 27:
                 break
