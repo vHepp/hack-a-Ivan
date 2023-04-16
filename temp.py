@@ -305,7 +305,7 @@ class TetrisApp(object):
             self.screen.fill((0, 0, 0))
 
             if self.gameover:
-                self.center_msg("""Game Over!Press space to continue""")
+                self.center_msg("""Game Over!""")
 
             else:
                 if self.paused:
@@ -329,10 +329,11 @@ class TetrisApp(object):
             ret, frame = capture.read()
 
             gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, 1.05, 6, 0, [70, 70])
+            faces = face_cascade.detectMultiScale(gray, 1.05, 6, 0, [180, 180])
 
             x, y, w, h = 0, 0, 0, 0
             for x, y, w, h in faces:
+                #print(x + w, y + h)
                 cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 cv.circle(frame, (x + int(w * 0.5), y +
                           int(h * 0.5)), 4, (0, 255, 0), -1)
@@ -450,8 +451,8 @@ class TetrisApp(object):
             if i % 3 == 2:
                 if faceCenterYs[2] and faceCenterYs[0]:
                     print(faceCenterYs[2] - faceCenterYs[0])
-                    # if faceCenterYs[2] - faceCenterYs[0] > 25:
-                    #    self.quickDrop()
+                    if faceCenterYs[2] - faceCenterYs[0] > 15:
+                        self.quickDrop()
             for event in pygame.event.get():
                 if event.type == pygame.USEREVENT+1:
                     self.drop()
