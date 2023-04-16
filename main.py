@@ -4,11 +4,9 @@ from random import randrange as rand
 import pygame
 import sys
 
-# 0 for webcam feed ; add "path to file"
-# for detection in video file
-capture = cv.VideoCapture(1)
-#capture.set(3, 1280)
-#capture.set(4, 720)
+# 0 for embedded webcam
+# 1 for external webcam
+capture = cv.VideoCapture(0)
 
 face_cascade = cv.CascadeClassifier("haarcascade_frontalface_default.xml")
 eye_cascade = cv.CascadeClassifier("haarcascade_eye.xml")
@@ -286,7 +284,8 @@ class TetrisApp(object):
             'z':		self.rotate_stone_CounterClockwise,
             'x':        self.rotate_stone_Clockwise,
             'p':		self.toggle_pause,
-            '': lambda: self.move(0)
+            'SPACE':	self.start_game
+
         }
 
         self.gameover = False
@@ -329,10 +328,11 @@ class TetrisApp(object):
             ret, frame = capture.read()
 
             gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-            faces = face_cascade.detectMultiScale(gray, 1.05, 6, 0, [70, 70])
+            faces = face_cascade.detectMultiScale(gray, 1.05, 6, 0, [180, 180])
 
             x, y, w, h = 0, 0, 0, 0
             for x, y, w, h in faces:
+                #print(x + w, y + h)
                 cv.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 cv.circle(frame, (x + int(w * 0.5), y +
                           int(h * 0.5)), 4, (0, 255, 0), -1)
@@ -449,9 +449,9 @@ class TetrisApp(object):
                     )
             if i % 3 == 2:
                 if faceCenterYs[2] and faceCenterYs[0]:
-                    print(faceCenterYs[2] - faceCenterYs[0])
-                    # if faceCenterYs[2] - faceCenterYs[0] > 25:
-                    #    self.quickDrop()
+                    #print(faceCenterYs[2] - faceCenterYs[0])
+                    if faceCenterYs[2] - faceCenterYs[0] > 15:
+                        self.quickDrop()
             for event in pygame.event.get():
                 if event.type == pygame.USEREVENT+1:
                     self.drop()
@@ -460,9 +460,11 @@ class TetrisApp(object):
                         self.rotate_stone_Clockwise()
                     elif lastMove == "LEFT":
                         self.rotate_stone_CounterClockwise()
-
-                    # if faceCenterY - initialFaceCenterY > 10:
-                    #    self.quickDrop()
+                elif event.type == pygame.KEYDOWN:
+                    for key in key_actions:
+                        if event.key == eval("pygame.K_"
+                                             + key):
+                            key_actions[key]()
 
             # Mirroring stone and face location
             prev_x = self.stone_x
